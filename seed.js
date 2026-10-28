@@ -9,8 +9,13 @@ require('dotenv').config();
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/nursing_portal';
 
 async function seedFourDepartmentsDatabase() {
+    const ownsConnection = mongoose.connection.readyState === 0;
     try {
-        await mongoose.connect(MONGO_URI);
+        if (ownsConnection) {
+            await mongoose.connect(MONGO_URI);
+        } else if (mongoose.connection.readyState === 2) {
+            await mongoose.connection.asPromise();
+        }
         console.log('Connected to MongoDB. Resetting with 4 Departments (Normal Ward, ER, ICU, OP)...');
 
         // 1. Clear all existing collections
@@ -200,11 +205,26 @@ async function seedFourDepartmentsDatabase() {
         console.log('   - ICU Sudden Leave Deficit Created (Priya Sharma)');
         console.log('   - Low-OT Substitute Ready for Overtime Allocation (Kavya Singh - 0h OT)');
         console.log('========================================================================\n');
-        process.exit(0);
+        return {
+            nurses: insertedNurses.length,
+            departments: ['Normal Ward', 'ER', 'ICU', 'OP'],
+            message: 'Database seeded successfully'
+        };
     } catch (err) {
         console.error('Error seeding database:', err);
-        process.exit(1);
+        throw err;
     }
 }
 
-seedFourDepartmentsDatabase();
+if (require.main === module) {
+    seedFourDepartmentsDatabase()
+        .then(result => {
+            console.log(result.message);
+            return mongoose.disconnect();
+        })
+        .catch(() => {
+            process.exitCode = 1;
+        });
+}
+
+module.exports = { seedFourDepartmentsDatabase };
