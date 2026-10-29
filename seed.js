@@ -27,7 +27,7 @@ async function seedFourDepartmentsDatabase() {
             OvertimeAllocation.deleteMany({})
         ]);
         console.log('✓ Wiped old database collections.');
-
+//ss
         // 2. Insert 20 Nurses (Exactly 5 per department across the 4 required departments)
         // Rule: In each department, 3 nurses are needed for a shift.
         const nursesData = [
